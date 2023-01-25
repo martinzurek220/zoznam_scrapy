@@ -1,15 +1,71 @@
 import scrapy
 from ..items import ZoznamItem
+from scrapy.linkextractors import LinkExtractor
 
 
 class ZoznamSpider(scrapy.Spider):
 
+    def __init__(self):
+        self.pocet_naparsovanych_url = 0
+        self.limit_pro_naparsovani_url = 100
+        self.naparsovane_url = []
+
     name = 'zoznam'  # jmeno spideru
-    start_urls = ['https://www.zoznam.sk/katalog/Auto-moto-preprava-logistika/Auto-HiFi-autoelektro/']
+
+    start_urls = [
+        'https://www.zoznam.sk/katalog/'
+    ]
+
+    link_extractor = LinkExtractor(allow='/katalog/', restrict_css='.folder')
+
+    def start_requests(self):
+
+        for url in self.start_urls:
+            self.naparsovane_url.append(url)
+            self.pocet_naparsovanych_url += 1
+            yield scrapy.Request(url, callback=self.parse)
 
     def parse(self, response):  # response je odpoved stranky (html kod), kde budu hledat html tagy a css tagy
 
-        items = ZoznamItem()
+        links = self.link_extractor.extract_links(response)
+        # print(f"Link: {links}")
+        print(f"Počet odkazů: {len(links)}")
+
+        # Stazeni udaju o firmach
+        # self.stahni_udaje_o_firmach(response)
+
+        firmy = response.css('.catalog-list-content')
+        # print("FIRMY:", firmy)
+
+        for firma in firmy:
+            nazev_firmy = firma.css('h2 a::text').extract()
+            adresa_firmy = firma.css('address a::text').extract()
+            # popis_firmy = firma.css('.desc::text').extract()
+            popis_firmy = firma.css('p::text').extract()
+            url_firmy = firma.css('a.catalog-list-link::text').extract()
+
+            yield {
+                'nazev_firmy': nazev_firmy,
+                'adresa': adresa_firmy,
+                'popis': popis_firmy,
+                'url_firmy': url_firmy,
+            }
+
+        # Url k naparsovani
+        for idx, link in enumerate(links):
+            if idx < 2 and link.url not in self.naparsovane_url and \
+                    self.pocet_naparsovanych_url < self.limit_pro_naparsovani_url:
+                self.pocet_naparsovanych_url += 1
+                self.naparsovane_url.append(link.url)
+                yield scrapy.Request(link.url)
+
+                print(f"Pocet stazenych url: {self.pocet_naparsovanych_url}")
+            else:
+                break
+
+        print(f"Naparsovane url: {self.naparsovane_url}")
+
+    def stahni_udaje_o_firmach(self, response):
 
         firmy = response.css('.catalog-list-content')
         # print("FIRMY:", firmy)
@@ -17,27 +73,16 @@ class ZoznamSpider(scrapy.Spider):
         for firma in firmy:
             # print("FIRMA:", firma)
             # print(type(firma))
-            nazev_firmy = firma.css('a::text')[0].extract()
-            adresa_firmy = firma.css('a::text')[1].extract()
-            popis_firmy = firma.css('.desc::text').extract()
-            url_firmy = firma.css('a::text')[2].extract()
 
-            # nazev firmy v hranatych zavorkach musi byt s podtrzitkem, jinak to nefunguje,
-            # protoze ten nazev odkazuje na promennou v items
-            items['nazev_firmy'] = nazev_firmy
-            items['adresa_firmy'] = adresa_firmy
-            items['popis_firmy'] = popis_firmy
-            items['url_firmy'] = url_firmy
+            nazev_firmy = firma.css('h2 a::text').extract()
+            adresa_firmy = firma.css('address a::text').extract()
+            # popis_firmy = firma.css('.desc::text').extract()
+            popis_firmy = firma.css('p::text').extract()
+            url_firmy = firma.css('a.catalog-list-link::text').extract()
 
-            yield items
-
-            # yield{
-            #     'nazev_firmy': nazev_firmy,
-            #     'adresa': adresa,
-            #     'popis': popis,
-            #     'url_firmy': url_firmy
-            # }
-
-        next_page = response.css('div.paginator a::attr(href)').get()
-        if next_page is not None:
-            yield response.follow(next_page, callback=self.parse)
+            yield {
+                'nazev_firmy': nazev_firmy,
+                'adresa': adresa_firmy,
+                'popis': popis_firmy,
+                'url_firmy': url_firmy,
+            }
