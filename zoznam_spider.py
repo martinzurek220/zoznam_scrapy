@@ -32,28 +32,11 @@ class ZoznamSpider(scrapy.Spider):
         print(f"Počet odkazů: {len(links)}")
 
         # Stazeni udaju o firmach
-        # self.stahni_udaje_o_firmach(response)
-
-        firmy = response.css('.catalog-list-content')
-        # print("FIRMY:", firmy)
-
-        for firma in firmy:
-            nazev_firmy = firma.css('h2 a::text').extract()
-            adresa_firmy = firma.css('address a::text').extract()
-            # popis_firmy = firma.css('.desc::text').extract()
-            popis_firmy = firma.css('p::text').extract()
-            url_firmy = firma.css('a.catalog-list-link::text').extract()
-
-            yield {
-                'nazev_firmy': nazev_firmy,
-                'adresa': adresa_firmy,
-                'popis': popis_firmy,
-                'url_firmy': url_firmy,
-            }
+        yield from self.stahni_udaje_o_firmach(response)
 
         # Url k naparsovani
         for idx, link in enumerate(links):
-            if idx < 2 and link.url not in self.naparsovane_url and \
+            if idx < 1 and link.url not in self.naparsovane_url and \
                     self.pocet_naparsovanych_url < self.limit_pro_naparsovani_url:
                 self.pocet_naparsovanych_url += 1
                 self.naparsovane_url.append(link.url)
@@ -86,3 +69,31 @@ class ZoznamSpider(scrapy.Spider):
                 'popis': popis_firmy,
                 'url_firmy': url_firmy,
             }
+
+    def najdi_zalozky(self, response):
+
+        zalozky = response.css('.row paginator')
+
+        for zalozka in zalozky:
+
+            zalozka_url = zalozka.css('a::attr(href)').get()
+
+            # Dokoncit zalozky
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
