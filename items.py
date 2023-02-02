@@ -8,9 +8,9 @@ import scrapy
 
 class ZoznamItem(scrapy.Item):
     # define the fields for your item here like:
-    vytvoreno = scrapy.Field()
-    nazev_firmy = scrapy.Field()
-    zoznam_url_firmy = scrapy.Field()
-    adresa_firmy = scrapy.Field()
-    popis_firmy = scrapy.Field()
-    url_firmy = scrapy.Field()
+    created = scrapy.Field()
+    name = scrapy.Field()
+    zoznam_url = scrapy.Field()
+    address = scrapy.Field()
+    label = scrapy.Field()
+    company_url = scrapy.Field()
