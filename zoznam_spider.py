@@ -7,8 +7,8 @@ from datetime import datetime
 class ZoznamSpider(scrapy.Spider):
 
     def __init__(self):
-        self.urL_counter = 0  # Pocet pro porovnani s limitem url
-        self.limit_urls = 100
+        # self.urL_counter = 0  # Pocet pro porovnani s limitem url
+        # self.limit_urls = 3  # Nastaveni limitu pro pecet stazenych url
         self.parsed_url = []
         self.firs_part_url = "https://www.zoznam.sk"
         self.items = ZoznamItem()
@@ -31,7 +31,7 @@ class ZoznamSpider(scrapy.Spider):
 
         for url in self.start_urls:
             self.parsed_url.append(url)
-            self.urL_counter += 1
+            # self.urL_counter += 1
             yield scrapy.Request(url, callback=self.parse)
 
     def parse(self, response):  # response je odpoved stranky (html kod), kde budu hledat html tagy a css tagy
@@ -54,9 +54,9 @@ class ZoznamSpider(scrapy.Spider):
 
         # Url k naparsovani
         for idx, link in enumerate(links):
-            if idx < 1 and link.url not in self.parsed_url and \
-                    self.urL_counter < self.limit_urls:
-                self.urL_counter += 1
+            # if link.url not in self.parsed_url and self.urL_counter < self.limit_urls:
+            if link.url not in self.parsed_url:
+                # self.urL_counter += 1
                 self.parsed_url.append(link.url)
                 yield scrapy.Request(link.url)
 
@@ -121,20 +121,3 @@ class ZoznamSpider(scrapy.Spider):
         next_page = response.css('a.next::attr(href)').get()
         if next_page is not None:
             yield response.follow(next_page, self.get_companies_and_bookmarks)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
